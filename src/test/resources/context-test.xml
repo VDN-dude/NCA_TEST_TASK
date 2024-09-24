@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+    <description>Holds application context for testing of the domain module.</description>
+
+    <context:component-scan base-package="com.nca"/>
+    <context:annotation-config/>
+    <jpa:repositories base-package="com.nca.repository"/>
+
+    <bean name="appProperties" class="com.nca.config.properties.AppProperties">
+        <property name="profile" value="test"/>
+        <property name="datasource" ref="appPropertiesDatasource"/>
+        <property name="hibernate" ref="appPropertiesHibernate"/>
+    </bean>
+
+    <bean name="appPropertiesDatasource" class="com.nca.config.properties.AppProperties.Datasource">
+        <property name="url" value="jdbc:postgresql://localhost:5432/postgres"/>
+        <property name="driver" value="org.postgresql.Driver"/>
+        <property name="password" value="root"/>
+        <property name="username" value="postgres"/>
+    </bean>
+
+    <bean name="appPropertiesHibernate" class="com.nca.config.properties.AppProperties.Hibernate">
+        <property name="defaultSchema" value="test"/>
+        <property name="dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+        <property name="showSql" value="true"/>
+        <property name="hbm2ddlAuto" value="none"/>
+    </bean>
+
+    <bean name="dataInitializer" class="com.nca.config.initializer.TestDataInitializer">
+    </bean>
+
+</beans>

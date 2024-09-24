@@ -1,0 +1,11 @@
+datasource:
+  driver: ${datasource.driver}
+  url: ${datasource.url}
+  username: ${datasource.username}
+  password: ${datasource.password}
+
+hibernate:
+  hbm2ddlAuto: ${hibernate.hbm2ddl.auto}
+  showSql: ${hibernate.show-sql}
+  dialect: ${hibernate.dialect}
+  defaultSchema: ${spring.profiles.active}
