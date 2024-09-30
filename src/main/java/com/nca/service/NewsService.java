@@ -3,7 +3,10 @@ package com.nca.service;
 import com.nca.dto.response.CommentsResponseDTO;
 import com.nca.dto.response.NewsResponseDTO;
 import com.nca.dto.response.NewsResponseNoCommentsDTO;
+import com.nca.entity.User;
+import com.nca.entity.UserRole;
 import com.nca.exception.EntityNotFoundException;
+import com.nca.exception.ChangeResourceAccessDeniedException;
 import com.nca.repository.CommentsRepository;
 import com.nca.repository.NewsRepository;
 import com.nca.dto.request.NewsCreateRequestDTO;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.nca.exception.Message.CHANGE_RESOURCE_ACCESS_DENIED;
 import static com.nca.exception.Message.ENTITY_NOT_FOUND;
 
 /**
@@ -68,8 +72,10 @@ public class NewsService {
      * @return {@link NewsResponseNoCommentsDTO} of updated entity.
      * @throws com.nca.exception.EntityNotFoundException if there isn't news in the system with provided id.
      */
-    public NewsResponseNoCommentsDTO update(NewsUpdateRequestDTO newsUpdateRequest, Long id) {
+    public NewsResponseNoCommentsDTO update(NewsUpdateRequestDTO newsUpdateRequest, Long id, User user) {
         News news = getNewsById(id);
+
+        checkAccess(user, news);
 
         newsMapper.updateFromDto(newsUpdateRequest, news);
 
@@ -132,8 +138,10 @@ public class NewsService {
      * @param id
      * @throws com.nca.exception.EntityNotFoundException if there isn't news in the system with provided id.
      */
-    public void delete(Long id) {
+    public void delete(Long id, User user) {
         News news = getNewsById(id);
+
+        checkAccess(user, news);
 
         newsRepository.delete(news);
         log.trace("Deleted news: {}", news);
@@ -160,5 +168,18 @@ public class NewsService {
         return newsRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format(ENTITY_NOT_FOUND.getMessage(), News.class.getSimpleName())));
+    }
+
+    private void checkAccess(User user, News news) {
+        if (user.getUserRole().equals(UserRole.ROLE_JOURNALIST)) {
+
+            if (!user.getId().equals(news.getInsertedBy().getId())) {
+
+                throw new ChangeResourceAccessDeniedException(
+                        String.format(CHANGE_RESOURCE_ACCESS_DENIED.getMessage(),
+                                News.class.getSimpleName(),
+                                news.getId()));
+            }
+        }
     }
 }

@@ -5,6 +5,9 @@ import com.nca.dto.request.CommentsUpdateRequestDTO;
 import com.nca.dto.response.CommentsResponseDTO;
 import com.nca.entity.Comments;
 import com.nca.entity.News;
+import com.nca.entity.User;
+import com.nca.entity.UserRole;
+import com.nca.exception.ChangeResourceAccessDeniedException;
 import com.nca.exception.CommentsNotBelongToNewsException;
 import com.nca.exception.EntityNotFoundException;
 import com.nca.mapper.CommentsMapper;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.nca.exception.Message.CHANGE_RESOURCE_ACCESS_DENIED;
 import static com.nca.exception.Message.COMMENTS_NOT_BELONG_TO_NEWS;
 import static com.nca.exception.Message.ENTITY_NOT_FOUND;
 
@@ -73,11 +77,17 @@ public class CommentsService {
      * @throws com.nca.exception.EntityNotFoundException          if there isn't news or comment in the system with provided id.
      * @throws com.nca.exception.CommentsNotBelongToNewsException if news with provided {@code newsId} hasn't the comment with provided {@code commentId}.
      */
-    public CommentsResponseDTO update(CommentsUpdateRequestDTO commentsUpdateRequest, Long commentId, Long newsId) {
+    public CommentsResponseDTO update(CommentsUpdateRequestDTO commentsUpdateRequest,
+                                      Long commentId,
+                                      Long newsId,
+                                      User user) {
+
         News news = getNewsById(newsId);
         Comments comment = getCommentById(commentId);
 
         isCommentBeLongToNews(comment, news);
+
+        checkAccess(user, comment);
 
         commentsMapper.updateFromDto(commentsUpdateRequest, comment);
         Comments updated = commentsRepository.save(comment);
@@ -113,11 +123,13 @@ public class CommentsService {
      * @throws com.nca.exception.EntityNotFoundException          if there isn't news or comment in the system with provided id.
      * @throws com.nca.exception.CommentsNotBelongToNewsException if news with provided {@code newsId} hasn't the comment with provided {@code commentId}.
      */
-    public void delete(Long commentId, Long newsId) {
+    public void delete(Long commentId, Long newsId, User user) {
         News news = getNewsById(newsId);
         Comments comment = getCommentById(commentId);
 
         isCommentBeLongToNews(comment, news);
+
+        checkAccess(user, comment);
 
         news.getComments().remove(comment);
         comment.setNews(null);
@@ -163,5 +175,18 @@ public class CommentsService {
         return newsRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format(ENTITY_NOT_FOUND.getMessage(), News.class.getSimpleName())));
+    }
+
+    private void checkAccess(User user, Comments comments) {
+        if (user.getUserRole().equals(UserRole.ROLE_SUBSCRIBER)) {
+
+            if (!user.getId().equals(comments.getInsertedBy().getId())) {
+
+                throw new ChangeResourceAccessDeniedException(
+                        String.format(CHANGE_RESOURCE_ACCESS_DENIED.getMessage(),
+                                Comments.class.getSimpleName(),
+                                comments.getId()));
+            }
+        }
     }
 }

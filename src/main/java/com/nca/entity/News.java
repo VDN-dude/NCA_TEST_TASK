@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 import org.joda.time.LocalDateTime;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -48,20 +50,22 @@ public class News {
     private String text;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "inserted_by_id")
+    @JoinColumn(name = "inserted_by_id", updatable = false)
+    @CreatedBy
     private User insertedBy;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "updated_by_id")
+    @JoinColumn(name = "updated_by_id", insertable = false)
+    @LastModifiedBy
     private User updatedBy;
 
     @CreatedDate
-    @Column(name = "creation_date",  insertable = true, updatable = false)
+    @Column(name = "creation_date", updatable = false)
     @Type(type= "org.jadira.usertype.dateandtime.joda.PersistentLocalDateTime")
     private LocalDateTime creationDate;
 
     @LastModifiedDate
-    @Column(name = "last_edit_date", insertable = false, updatable = true)
+    @Column(name = "last_edit_date", insertable = false)
     @Type(type= "org.jadira.usertype.dateandtime.joda.PersistentLocalDateTime")
     private LocalDateTime lastEditDate;
 

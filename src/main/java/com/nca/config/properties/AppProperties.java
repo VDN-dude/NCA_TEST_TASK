@@ -21,9 +21,10 @@ import java.util.Map;
 @AllArgsConstructor
 public class AppProperties {
 
-    protected String profile;
+    private String profile;
     private Datasource datasource;
     private Hibernate hibernate;
+    private Jwt jwt;
 
     public AppProperties() {
 
@@ -49,6 +50,7 @@ public class AppProperties {
         ObjectMapper objectMapper = new ObjectMapper();
         this.datasource = objectMapper.convertValue(load.get("datasource"), Datasource.class);
         this.hibernate = objectMapper.convertValue(load.get("hibernate"), Hibernate.class);
+        this.jwt = objectMapper.convertValue(load.get("jwt"), Jwt.class);
     }
 
     @Data
@@ -71,5 +73,16 @@ public class AppProperties {
         private String dialect;
         private String showSql;
         private String defaultSchema;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Jwt {
+
+        private String accessSecret;
+        private Long accessExpiration;
+        private String refreshSecret;
+        private Long refreshExpiration;
     }
 }

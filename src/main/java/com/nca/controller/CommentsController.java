@@ -3,15 +3,21 @@ package com.nca.controller;
 import com.nca.dto.request.CommentsCreateRequestDTO;
 import com.nca.dto.request.CommentsUpdateRequestDTO;
 import com.nca.dto.response.CommentsResponseDTO;
+import com.nca.entity.User;
 import com.nca.service.CommentsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import javax.validation.Valid;
 
 /**
  * {@code CommentsController} is controller which process all request about comments.
@@ -58,9 +64,10 @@ public class CommentsController {
      *
      * @return {@code ResponseEntity} with created entity mapped to {@link CommentsResponseDTO} as response body.
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUBSCRIBER')")
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<CommentsResponseDTO> create(@PathVariable(value = "newsId") Long newsId,
-                                                      @RequestBody CommentsCreateRequestDTO commentsCreateRequest) {
+                                                      @RequestBody @Valid CommentsCreateRequestDTO commentsCreateRequest) {
 
         return new ResponseEntity<>(commentsService.save(commentsCreateRequest, newsId), HttpStatus.CREATED);
     }
@@ -75,12 +82,15 @@ public class CommentsController {
      *
      * @return {@code ResponseEntity} with updated entity mapped to {@link CommentsResponseDTO} as response body.
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUBSCRIBER')")
     @RequestMapping(value = "/{commentId}", method = RequestMethod.PATCH)
-    public ResponseEntity<CommentsResponseDTO> update(@PathVariable(value = "newsId") Long newsId,
+    public ResponseEntity<CommentsResponseDTO> update(@AuthenticationPrincipal User user,
+                                                      @PathVariable(value = "newsId") Long newsId,
                                                       @PathVariable(value = "commentId") Long commentId,
-                                                      @RequestBody CommentsUpdateRequestDTO commentsUpdateRequest) {
+                                                      @RequestBody @Valid CommentsUpdateRequestDTO commentsUpdateRequest) {
 
-        return new ResponseEntity<>(commentsService.update(commentsUpdateRequest, commentId, newsId), HttpStatus.OK);
+        return new ResponseEntity<>(commentsService.update(commentsUpdateRequest, commentId, newsId, user),
+                HttpStatus.OK);
     }
 
     /**
@@ -92,11 +102,13 @@ public class CommentsController {
      *
      * @return {@code ResponseEntity} with empty body.
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUBSCRIBER')")
     @RequestMapping(value = "/{commentId}", method = RequestMethod.DELETE)
-    public ResponseEntity<CommentsResponseDTO> delete(@PathVariable(value = "newsId") Long newsId,
+    public ResponseEntity<CommentsResponseDTO> delete(@AuthenticationPrincipal User user,
+                                                      @PathVariable(value = "newsId") Long newsId,
                                                       @PathVariable(value = "commentId") Long commentId) {
 
-        commentsService.delete(commentId, newsId);
+        commentsService.delete(commentId, newsId, user);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

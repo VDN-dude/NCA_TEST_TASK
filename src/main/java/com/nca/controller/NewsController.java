@@ -4,18 +4,28 @@ import com.nca.dto.request.NewsCreateRequestDTO;
 import com.nca.dto.request.NewsUpdateRequestDTO;
 import com.nca.dto.response.NewsResponseDTO;
 import com.nca.dto.response.NewsResponseNoCommentsDTO;
+import com.nca.entity.User;
 import com.nca.service.NewsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.validation.Valid;
 
 /**
  * {@code NewsController} is controller which process all request about {@link com.nca.entity.News}.
@@ -23,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/news")
+@Validated
 public class NewsController {
 
     private NewsService newsService;
@@ -85,9 +96,9 @@ public class NewsController {
      *
      * @return {@code ResponseEntity} with created entity mapped to {@link NewsResponseNoCommentsDTO} as response body.
      */
-    @RequestMapping(method = RequestMethod.POST,
-            consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<NewsResponseNoCommentsDTO> create(@RequestBody NewsCreateRequestDTO newsCreateRequest) {
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_JOURNALIST')")
+    @RequestMapping(method = RequestMethod.POST)
+    public ResponseEntity<NewsResponseNoCommentsDTO> create(@RequestBody @Valid NewsCreateRequestDTO newsCreateRequest) {
 
         return new ResponseEntity<>(newsService.save(newsCreateRequest), HttpStatus.CREATED);
     }
@@ -101,11 +112,13 @@ public class NewsController {
      * @param newsUpdateRequest
      * @return {@code ResponseEntity} with updated entity mapped to {@link NewsResponseNoCommentsDTO} as response body.
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'JOURNALIST')")
     @RequestMapping(value = "/{newsId}", method = RequestMethod.PATCH)
-    public ResponseEntity<NewsResponseNoCommentsDTO> update(@PathVariable(value = "newsId") Long newsId,
-                                                            @RequestBody NewsUpdateRequestDTO newsUpdateRequest) {
+    public ResponseEntity<NewsResponseNoCommentsDTO> update(@AuthenticationPrincipal User user,
+                                                            @PathVariable(value = "newsId") Long newsId,
+                                                            @RequestBody @Valid NewsUpdateRequestDTO newsUpdateRequest) {
 
-        return new ResponseEntity<>(newsService.update(newsUpdateRequest, newsId), HttpStatus.OK);
+        return new ResponseEntity<>(newsService.update(newsUpdateRequest, newsId, user), HttpStatus.OK);
     }
 
     /**
@@ -115,10 +128,12 @@ public class NewsController {
      * @param newsId
      * @return {@code ResponseEntity} with empty body
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'JOURNALIST')")
     @RequestMapping(value = "/{newsId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> delete(@PathVariable(value = "newsId") Long newsId) {
+    public ResponseEntity<?> delete(@AuthenticationPrincipal User user,
+                                    @PathVariable(value = "newsId") Long newsId) {
 
-        newsService.delete(newsId);
+        newsService.delete(newsId, user);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

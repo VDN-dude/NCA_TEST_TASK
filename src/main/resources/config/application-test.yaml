@@ -9,3 +9,9 @@ hibernate:
   showSql: ${hibernate.show-sql}
   dialect: ${hibernate.dialect}
   defaultSchema: ${spring.profiles.active}
+
+jwt:
+  accessSecret: secret
+  accessExpiration: 6000000
+  refreshSecret: secret
+  refreshExpiration: 6000000

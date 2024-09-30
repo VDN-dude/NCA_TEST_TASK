@@ -5,6 +5,8 @@ import com.nca.dto.request.CommentsUpdateRequestDTO;
 import com.nca.dto.response.CommentsResponseDTO;
 import com.nca.entity.Comments;
 import com.nca.entity.News;
+import com.nca.entity.User;
+import com.nca.entity.UserRole;
 import com.nca.exception.CommentsNotBelongToNewsException;
 import com.nca.exception.EntityNotFoundException;
 import com.nca.mapper.CommentsMapper;
@@ -16,6 +18,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -31,6 +34,7 @@ public class CommentsServiceTest {
     private CommentsService commentsService =
             new CommentsService(commentsRepository, newsRepository, commentsMapper);
 
+    private User user;
     private News news;
     private News secondNews;
     private Comments comments;
@@ -39,6 +43,15 @@ public class CommentsServiceTest {
 
     @Before
     public void setUp() {
+        user = User.builder()
+                .id(String.valueOf(UUID.randomUUID()))
+                .name("Name")
+                .surname("Surname")
+                .parentName("Parent name")
+                .password("Password")
+                .username("Username")
+                .userRole(UserRole.ROLE_ADMIN)
+                .build();
         news = News.builder()
                 .id(1L)
                 .title("News title")
@@ -127,7 +140,8 @@ public class CommentsServiceTest {
                     return commentsResponseDTO;
                 });
 
-        CommentsResponseDTO updated = commentsService.update(commentsUpdateRequestDTO, comments.getId(), news.getId());
+        CommentsResponseDTO updated = commentsService.update(
+                commentsUpdateRequestDTO, comments.getId(), news.getId(), user);
 
         assertEquals(commentsUpdateRequestDTO.getText(), updated.getText());
     }
@@ -137,7 +151,7 @@ public class CommentsServiceTest {
         when(newsRepository.findById(Long.MAX_VALUE))
                 .thenReturn(Optional.empty());
 
-        commentsService.update(commentsUpdateRequestDTO, comments.getId(), Long.MAX_VALUE);
+        commentsService.update(commentsUpdateRequestDTO, comments.getId(), Long.MAX_VALUE, user);
     }
 
     @Test(expected = EntityNotFoundException.class)
@@ -147,7 +161,7 @@ public class CommentsServiceTest {
         when(commentsRepository.findById(Long.MAX_VALUE))
                 .thenReturn(Optional.empty());
 
-        commentsService.update(commentsUpdateRequestDTO, Long.MAX_VALUE, news.getId());
+        commentsService.update(commentsUpdateRequestDTO, Long.MAX_VALUE, news.getId(), user);
     }
 
     @Test
@@ -208,7 +222,7 @@ public class CommentsServiceTest {
         when(commentsRepository.findById(comments.getId()))
                 .thenReturn(Optional.of(comments));
 
-        commentsService.delete(comments.getId(), news.getId());
+        commentsService.delete(comments.getId(), news.getId(), user);
 
         assertNull(comments.getNews());
     }
@@ -218,7 +232,7 @@ public class CommentsServiceTest {
         when(newsRepository.findById(Long.MAX_VALUE))
                 .thenReturn(Optional.empty());
 
-        commentsService.delete(comments.getId(), Long.MAX_VALUE);
+        commentsService.delete(comments.getId(), Long.MAX_VALUE, user);
     }
 
     @Test(expected = EntityNotFoundException.class)
@@ -228,7 +242,7 @@ public class CommentsServiceTest {
         when(commentsRepository.findById(Long.MAX_VALUE))
                 .thenReturn(Optional.empty());
 
-        commentsService.delete(Long.MAX_VALUE, news.getId());
+        commentsService.delete(Long.MAX_VALUE, news.getId(), user);
     }
 
     @Test(expected = CommentsNotBelongToNewsException.class)
@@ -239,6 +253,6 @@ public class CommentsServiceTest {
         when(commentsRepository.findById(comments.getId()))
                 .thenReturn(Optional.of(comments));
 
-        commentsService.delete(comments.getId(), news.getId());
+        commentsService.delete(comments.getId(), news.getId(), user);
     }
 }

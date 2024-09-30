@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nca.config.audit.AuditorAwareImpl;
 import com.nca.config.properties.AppProperties;
+import com.nca.entity.User;
+import com.nca.exception.EntityNotFoundException;
+import com.nca.repository.UserRepository;
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -19,12 +22,15 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.sql.DataSource;
 import java.util.Properties;
+
+import static com.nca.exception.Message.ENTITY_NOT_FOUND;
 
 /**
  * {@code AppConfig} intended to config beans
@@ -40,16 +46,15 @@ public class AppConfig {
 
     @Autowired
     private AppProperties appProperties;
+    @Autowired
+    private UserRepository userRepository;
 
-    /**
-     * {@code AuditorAware} bean for auditing entities.
-     * It helps in generating fields depended on time of persistence or updating
-     * and also to include person who did this
-     * @return {@code AuditorAwareImpl}
-     */
     @Bean
-    public AuditorAware<String> auditorProvider() {
-        return new AuditorAwareImpl();
+    public UserDetailsService userDetailsService() {
+        return username -> userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(ENTITY_NOT_FOUND.getMessage(), User.class.getSimpleName())));
     }
 
     /**

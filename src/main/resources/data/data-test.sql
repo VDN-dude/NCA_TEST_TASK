@@ -4,29 +4,30 @@ create schema test;
 
 create table if not exists test.users
 (
-    id           varchar(16) not null
+    id             varchar(36) not null
         primary key,
-    creation_date timestamp,
+    creation_date  timestamp,
     last_edit_date timestamp,
-    name         varchar(20),
-    parent_name   varchar(20),
-    password     varchar(80),
-    surname      varchar(20),
-    username     varchar(40)
+    name           varchar(20),
+    parent_name    varchar(20),
+    password       varchar(80),
+    surname        varchar(20),
+    username       varchar(40) unique ,
+    role           varchar
 );
 
 create table if not exists test.news
 (
-    id            bigserial
+    id             bigserial
         primary key,
     creation_date  timestamp,
-    last_edit_date  timestamp,
-    text          varchar(2000),
-    title         varchar(150),
-    inserted_by_id varchar(16)
-            references test.users,
-    updated_by_id  varchar(16)
-            references test.users
+    last_edit_date timestamp,
+    text           varchar(2000),
+    title          varchar(150),
+    inserted_by_id varchar(36)
+        references test.users,
+    updated_by_id  varchar(36)
+        references test.users
 );
 
 alter table test.news
@@ -34,21 +35,21 @@ alter table test.news
 
 create table if not exists test.comments
 (
-    id            bigserial
+    id             bigserial
         primary key,
     creation_date  timestamp,
-    text          varchar(300),
-    news_id       bigint
-            references test.news,
-    inserted_by_id varchar(16)
-            references test.users
+    text           varchar(300),
+    news_id        bigint
+        references test.news,
+    inserted_by_id varchar(36)
+        references test.users
 );
 
 alter table test.comments
     owner to postgres;
 
-insert into test.users (id, creation_date, last_edit_date, name, parent_name, password, surname, username)
-VALUES ('1', current_timestamp, null, 'yuru', 'vladimirovich', 'password', 'garanovich', 'vanderon');
+insert into test.users (id, creation_date, last_edit_date, name, parent_name, password, surname, username, role)
+VALUES ('9e0465b4-6157-4de8-a93e-279f7f81e913', current_timestamp, null, 'user', 'adminovich', '$2a$12$hEJKiKOZVbQ7evxLOxw4me1YNZ9n6832lHPaizSN7hfzQ2r/sFN/G', 'garanovich', 'vanderon', 'ROLE_ADMIN');
 
 insert into test.news(id, creation_date, last_edit_date, title, text)
 VALUES (1, current_timestamp, null, 'Breakthrough in Renewable Energy',

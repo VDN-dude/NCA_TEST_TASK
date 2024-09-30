@@ -1,7 +1,7 @@
 package com.nca.config.web;
 
 import com.nca.config.app.AppConfig;
-import com.nca.config.web.filter.RequestLoggingFilter;
+import com.nca.config.filter.ResponseLoggingFilter;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 import org.yaml.snakeyaml.Yaml;
 
@@ -43,7 +43,7 @@ public class WebInitializer extends AbstractAnnotationConfigDispatcherServletIni
         Map<String, Object> properties = yaml.load(inputStream);
 
         servletContext.setInitParameter("spring.profiles.active", String.valueOf(properties.get("profile")));
-        servletContext.addFilter("requestLoggingFilter", new RequestLoggingFilter());
+        servletContext.addFilter("requestLoggingFilter", new ResponseLoggingFilter());
         super.onStartup(servletContext);
     }
 

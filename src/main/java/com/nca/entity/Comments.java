@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 import org.joda.time.LocalDateTime;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -19,7 +20,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
 
 @Data
 @Builder
@@ -42,15 +42,17 @@ public class Comments {
     private String text;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "inserted_by_id")
+    @JoinColumn(name = "inserted_by_id", updatable = false)
+    @CreatedBy
     private User insertedBy;
 
     @CreatedDate
-    @Column(name = "creation_date",  insertable = true, updatable = false)
+    @Column(name = "creation_date", updatable = false)
     @Type(type= "org.jadira.usertype.dateandtime.joda.PersistentLocalDateTime")
     private LocalDateTime creationDate;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "news_id", updatable = false)
     private News news;
 
 }

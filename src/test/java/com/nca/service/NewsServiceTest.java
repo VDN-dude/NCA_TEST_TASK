@@ -7,6 +7,8 @@ import com.nca.dto.response.NewsResponseDTO;
 import com.nca.dto.response.NewsResponseNoCommentsDTO;
 import com.nca.entity.Comments;
 import com.nca.entity.News;
+import com.nca.entity.User;
+import com.nca.entity.UserRole;
 import com.nca.exception.EntityNotFoundException;
 import com.nca.mapper.NewsMapper;
 import com.nca.repository.CommentsRepository;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Sort;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -34,8 +37,11 @@ public class NewsServiceTest {
     private NewsMapper newsMapper = mock(NewsMapper.class);
 
     private NewsService newsService =
-            new NewsService(newsRepository, commentsRepository, newsMapper);
+            new NewsService(newsRepository,
+                    commentsRepository,
+                    newsMapper);
 
+    private User user;
     private News news;
     private News secondNews;
     private Comments comments;
@@ -50,6 +56,15 @@ public class NewsServiceTest {
 
     @Before
     public void setUp() {
+        user = User.builder()
+                .id(String.valueOf(UUID.randomUUID()))
+                .name("Name")
+                .surname("Surname")
+                .parentName("Parent name")
+                .password("Password")
+                .username("Username")
+                .userRole(UserRole.ROLE_ADMIN)
+                .build();
         news = News.builder()
                 .id(1L)
                 .title("News title")
@@ -157,7 +172,7 @@ public class NewsServiceTest {
                 });
 
         NewsResponseNoCommentsDTO updated =
-                newsService.update(newsUpdateRequestDTO, news.getId());
+                newsService.update(newsUpdateRequestDTO, news.getId(), user);
 
         assertEquals(newsUpdateRequestDTO.getText(), updated.getText());
         assertEquals(newsUpdateRequestDTO.getTitle(), updated.getTitle());
@@ -168,7 +183,7 @@ public class NewsServiceTest {
         when(newsRepository.findById(Long.MAX_VALUE))
                 .thenReturn(Optional.empty());
 
-        newsService.update(newsUpdateRequestDTO, Long.MAX_VALUE);
+        newsService.update(newsUpdateRequestDTO, Long.MAX_VALUE, user);
     }
 
     @Test
